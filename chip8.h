@@ -29,5 +29,6 @@ public:
   int get_Key(int);
   void set_Key(int, int);
   void set_Draw(bool);
+  void uodate_Timers();
   ~CHIP();
 };

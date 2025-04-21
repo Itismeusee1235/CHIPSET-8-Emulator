@@ -89,6 +89,7 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
       cout << V[i] << " ";
     }
     cout << endl;
+    cout << st << " " << dt << endl;
   }
 
   pc += 2;
@@ -100,7 +101,7 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
         case 0x00E0:
           memset(display, 0, sizeof(display));
           draw_display = true;
-          cout << "Cleared display, time to draw" << endl;
+          // cout << "Cleared display, time to draw" << endl;
           break;
         case 0x00EE:
           pc = stack[sp];
@@ -259,7 +260,7 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
       }
 
       draw_display = true;
-      cout << "Wrote to display, time to draw" << endl;
+      // cout << "Wrote to display, time to draw" << endl;
       break;
     }
     case 0xE: {
@@ -282,7 +283,62 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
       break;
     }
     case 0xF: {
-      // NOTE: Implement this later
+      n1 = get_nibble(opcode, 8, 0x0F00);
+      n2 = get_nibble(opcode, 0, 0x00FF);
+      switch (n2) {
+        case 0x07: {
+          V[n1] = dt;
+          break;
+        }
+        case 0x0A: {
+          bool pressed = false;
+          for (int i = 0; i < 16; i++) {
+            if (keyboard[i] != 0) {
+              pressed = true;
+              V[n1] = (uint8_t)i;
+              break;
+            }
+          }
+          if (!pressed) {
+            pc -= 2;
+          }
+          break;
+        }
+        case 0x15: {
+          dt = V[n1];
+          break;
+        }
+        case 0x18: {
+          st = V[n1];
+          break;
+        }
+        case 0x1E: {
+          I = I + V[n1];
+          break;
+        }
+        case 0x29: {
+          I = V[n1] * 0x5;
+          break;
+        }
+        case 0x33: {
+          memory[I] = V[n1] / 100;
+          memory[I + 1] = (V[n1] % 100) / 10;
+          memory[I + 2] = V[n1] % 10;
+          break;
+        }
+        case 0x55: {
+          for (int i = 0; i <= n1; i++) {
+            memory[I + i] = V[i];
+          }
+          break;
+        }
+        case 0x65: {
+          for (int i = 0; i <= n1; i++) {
+            V[i] = memory[I + i];
+          }
+          break;
+        }
+      }
       break;
     }
   }
@@ -337,6 +393,16 @@ int CHIP::get_Key(int key)
 void CHIP::set_Key(int key, int val)
 {
   keyboard[key] = val;
+}
+
+void CHIP::uodate_Timers()
+{
+  if (dt > 0) {
+    dt--;
+  }
+  if (st > 0) {
+    st--;
+  }
 }
 
 CHIP::~CHIP() {}

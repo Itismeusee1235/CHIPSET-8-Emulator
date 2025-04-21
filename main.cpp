@@ -1,18 +1,22 @@
 #include "chip8.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
+#include <unistd.h>
 
-const int SCREEN_HEIGHT = 32;
-const int SCREEN_WIDTH = 64;
+const int SCREEN_HEIGHT = 320;
+const int SCREEN_WIDTH = 640;
 
 using namespace std;
+
+uint8_t keymap[16] = { SDLK_x, SDLK_1, SDLK_2, SDLK_3, SDLK_q, SDLK_w,
+                       SDLK_e, SDLK_a, SDLK_s, SDLK_d, SDLK_z, SDLK_c,
+                       SDLK_4, SDLK_r, SDLK_f, SDLK_v };
 
 int main()
 {
 
   CHIP chip;
-  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/Maze [David "
-               "Winter, 199x].ch8");
+  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/1dcell.ch8");
 
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
@@ -40,7 +44,7 @@ int main()
     return -1;
   }
 
-  SDL_Rect pixel = { 31, 16, 1, 1 };
+  SDL_Rect pixel = { 31, 16, 10, 10 };
 
   bool quit = false;
   while (!quit) {
@@ -49,7 +53,19 @@ int main()
       if (e.type == SDL_QUIT) {
         quit = true;
       } else if (e.type == SDL_KEYDOWN) {
-        // NOTE: Finishi this
+        for (int i = 0; i < 16; i++) {
+          if (e.key.keysym.sym == keymap[i]) {
+            chip.set_Key(i, 1);
+            break;
+          }
+        }
+      } else if (e.type == SDL_KEYUP) {
+        for (int i = 0; i < 16; i++) {
+          if (e.key.keysym.sym == keymap[i]) {
+            chip.set_Key(i, 0);
+            break;
+          }
+        }
       }
     }
     if (chip.get_Draw()) {
@@ -60,8 +76,8 @@ int main()
       for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 64; j++) {
           if (chip.get_Pixel(j, i)) {
-            pixel.x = j;
-            pixel.y = i;
+            pixel.x = j * 10;
+            pixel.y = i * 10;
             SDL_RenderFillRect(renderer, &pixel);
           }
         }
@@ -70,6 +86,7 @@ int main()
     }
 
     chip.one_Cycle(false, true);
+    usleep(1500);
   }
 
   return 0;
