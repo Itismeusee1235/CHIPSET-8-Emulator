@@ -1,6 +1,7 @@
 #include "./chip8.h"
+#include <cstdlib>
 #include <cstring>
-#include <ctype.h>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <stdint.h>
@@ -10,6 +11,7 @@ using namespace std;
 
 CHIP::CHIP()
 {
+  srand(time(0));
   st = 0;
   dt = 0;
   sp = -1;
@@ -224,7 +226,9 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
       break;
     }
     case 0xC: {
-      // NOTE: Make later
+      n1 = get_nibble(opcode, 8, 0x0F00);
+      n2 = get_nibble(opcode, 0, 0x00FF);
+      V[n1] = (uint8_t)((rand() % 256) & n2);
       break;
     }
     case 0xD: {

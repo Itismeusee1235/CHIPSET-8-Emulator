@@ -11,7 +11,8 @@ int main()
 {
 
   CHIP chip;
-  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/IBM Logo.ch8");
+  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/Maze [David "
+               "Winter, 199x].ch8");
 
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
