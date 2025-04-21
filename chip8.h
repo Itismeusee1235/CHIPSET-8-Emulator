@@ -13,6 +13,7 @@ class CHIP
 
   uint8_t memory[4096];
   int display[64 * 32];
+  int keyboard[16];
 
   int get_nibble(int, int, int);
 
@@ -25,6 +26,8 @@ public:
   bool one_Cycle(bool, bool);
   int get_Pixel(int, int);
   bool get_Draw();
+  int get_Key(int);
+  void set_Key(int, int);
   void set_Draw(bool);
   ~CHIP();
 };

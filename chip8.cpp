@@ -47,6 +47,7 @@ CHIP::CHIP()
   pc = 0x200;
 
   memset(display, 0, sizeof(display));
+  memset(keyboard, 0, sizeof(keyboard));
   draw_display = true;
 }
 
@@ -262,7 +263,22 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
       break;
     }
     case 0xE: {
-      // NOTE: Implement this later
+      n1 = get_nibble(opcode, 8, 0x0F00);
+      n2 = get_nibble(opcode, 0, 0x00FF);
+      switch (n2) {
+        case 0x9E: {
+          if (V[n1] == 1) {
+            pc += 2;
+          }
+          break;
+        }
+        case 0xA1: {
+          if (V[n1] == 0) {
+            pc += 2;
+          }
+          break;
+        }
+      }
       break;
     }
     case 0xF: {
@@ -311,6 +327,16 @@ bool CHIP::get_Draw()
 void CHIP::set_Draw(bool val)
 {
   draw_display = val;
+}
+
+int CHIP::get_Key(int key)
+{
+  return keyboard[key];
+}
+
+void CHIP::set_Key(int key, int val)
+{
+  keyboard[key] = val;
 }
 
 CHIP::~CHIP() {}

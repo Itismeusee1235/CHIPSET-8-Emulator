@@ -48,6 +48,8 @@ int main()
     while (SDL_PollEvent(&e)) {
       if (e.type == SDL_QUIT) {
         quit = true;
+      } else if (e.type == SDL_KEYDOWN) {
+        // NOTE: Finishi this
       }
     }
     if (chip.get_Draw()) {
