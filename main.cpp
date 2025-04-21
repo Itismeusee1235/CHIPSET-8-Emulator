@@ -1,36 +1,68 @@
 #include "chip8.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
 #include <iostream>
+
+const int SCREEN_HEIGHT = 32;
+const int SCREEN_WIDTH = 64;
 
 using namespace std;
 
 int main()
 {
-  SDL_Init(SDL_INIT_EVERYTHING);
-  SDL_Window* win =
-    SDL_CreateWindow("CHIP-8", 64, 32, 64, 32, SDL_WINDOW_SHOWN);
+  SDL_Window* window = NULL;
+  SDL_Renderer* renderer = NULL;
 
-  if (!win) {
-    cout << "Creating window error " << SDL_GetError() << endl;
+  if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+    printf("SDL Failed to INIT , %s", SDL_GetError());
+    return -1;
   }
 
-  SDL_Surface* winSurface = SDL_GetWindowSurface(win);
+  window = SDL_CreateWindow("CHIP 8",
+                            SDL_WINDOWPOS_UNDEFINED,
+                            SDL_WINDOWPOS_UNDEFINED,
+                            SCREEN_WIDTH,
+                            SCREEN_HEIGHT,
+                            SDL_WINDOW_SHOWN);
 
-  while (true) {
-    SDL_FillRect(
-      winSurface, NULL, SDL_MapRGB(winSurface->format, 255, 90, 120));
-    SDL_UpdateWindowSurface(win);
+  if (window == NULL) {
+    printf("Failed to make window, %s ", SDL_GetError());
+    return -1;
   }
 
-  system("pause");
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  if (renderer == NULL) {
+    printf("Failed to make renderer, %s ", SDL_GetError());
+    return -1;
+  }
 
-  SDL_DestroyWindow(win);
-  win = NULL;
-  winSurface = NULL;
-  SDL_Quit();
+  SDL_Rect pixel = { 31, 16, 1, 1 };
 
-  // CHIP chip;
-  // chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/IBM Logo.ch8");
-  // chip.print();
+  bool quit = false;
+  while (!quit) {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+      if (e.type == SDL_QUIT) {
+        quit = true;
+      }
+    }
+
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0xFF);
+
+    for (int i = 0; i < 64; i++) {
+      for (int j = 0; j < 32; j++) {
+        if ((i + j) % 2 == 1) {
+          pixel.x = i;
+          pixel.y = j;
+          SDL_RenderFillRect(renderer, &pixel);
+        }
+      }
+    }
+
+    SDL_RenderPresent(renderer);
+  }
+
   return 0;
 }

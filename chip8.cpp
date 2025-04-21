@@ -63,6 +63,7 @@ bool CHIP::loadRom(std::string file_name)
     char c;
     for (int i = 0x200; file.get(c); i++) {
       memory[i] = (uint8_t)c;
+      cout << i << " " << c << endl;
     }
 
   } else {
@@ -71,10 +72,21 @@ bool CHIP::loadRom(std::string file_name)
   return true;
 }
 
-bool CHIP::one_Cycle()
+bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
 {
   uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];
   int type_nibble = get_nibble(opcode, 12, 0xF000);
+
+  if (trace_mode) {
+    cout << hex << ((opcode & 0xF000) >> 12) << ((opcode & 0x0F00) >> 8)
+         << ((opcode & 0x00F0) >> 4) << (opcode & 0x000F) << " ";
+    cout << pc << " " << sp << endl;
+
+    for (int i = 0; i < 0xF; i++) {
+      cout << V[i] << " ";
+    }
+    cout << endl;
+  }
 
   pc += 2;
 
@@ -260,6 +272,7 @@ bool CHIP::one_Cycle()
       break;
     }
   }
+  return true;
 }
 
 void CHIP::print()
@@ -279,6 +292,12 @@ void CHIP::print()
   //     cout << "yay" << endl;
   //   }
   // }
+  for (int i = 0; i < 32; i++) {
+    for (int j = 0; j < 64; j++) {
+      cout << display[j + 64 * i];
+    }
+    cout << endl;
+  }
 }
 
 CHIP::~CHIP() {}

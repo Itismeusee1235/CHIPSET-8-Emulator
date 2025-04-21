@@ -22,6 +22,6 @@ public:
   CHIP();
   bool loadRom(std::string);
   void print();
-  bool one_Cycle();
+  bool one_Cycle(bool, bool);
   ~CHIP();
 };
