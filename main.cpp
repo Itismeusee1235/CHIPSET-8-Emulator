@@ -16,7 +16,8 @@ int main()
 {
 
   CHIP chip;
-  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/1dcell.ch8");
+  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/Particle Demo "
+               "[zeroZshadow, 2008].ch8");
 
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
@@ -47,6 +48,10 @@ int main()
   SDL_Rect pixel = { 31, 16, 10, 10 };
 
   bool quit = false;
+
+  int time = 0;
+  int prev_time = SDL_GetTicks();
+
   while (!quit) {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
@@ -68,6 +73,18 @@ int main()
         }
       }
     }
+
+    int curr_time = SDL_GetTicks();
+    int delta_time = curr_time - prev_time;
+    cout << delta_time << endl;
+    prev_time = curr_time;
+    time += delta_time;
+
+    if (time >= 1000 / 60) {
+      chip.uodate_Timers();
+      time = 0;
+    }
+
     if (chip.get_Draw()) {
       SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
       SDL_RenderClear(renderer);
