@@ -23,5 +23,8 @@ public:
   bool loadRom(std::string);
   void print();
   bool one_Cycle(bool, bool);
+  int get_Pixel(int, int);
+  bool get_Draw();
+  void set_Draw(bool);
   ~CHIP();
 };

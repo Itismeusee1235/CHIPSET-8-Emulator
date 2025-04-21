@@ -45,6 +45,7 @@ CHIP::CHIP()
   pc = 0x200;
 
   memset(display, 0, sizeof(display));
+  draw_display = true;
 }
 
 bool CHIP::loadRom(std::string file_name)
@@ -63,7 +64,6 @@ bool CHIP::loadRom(std::string file_name)
     char c;
     for (int i = 0x200; file.get(c); i++) {
       memory[i] = (uint8_t)c;
-      cout << i << " " << c << endl;
     }
 
   } else {
@@ -97,6 +97,7 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
         case 0x00E0:
           memset(display, 0, sizeof(display));
           draw_display = true;
+          cout << "Cleared display, time to draw" << endl;
           break;
         case 0x00EE:
           pc = stack[sp];
@@ -227,40 +228,33 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
       break;
     }
     case 0xD: {
+
       n1 = get_nibble(opcode, 8, 0x0F00);
-      n2 = get_nibble(opcode, 4, 0x00F0);
-      n3 = get_nibble(opcode, 0, 0x000F);
+      n2 = get_nibble(opcode, 4, 0x00f0);
+      n3 = get_nibble(opcode, 0, 0x000f);
 
-      V[0xF] = 0;
-
-      int x = V[n1] % 64;
-      int y = V[n2] % 32;
+      int x = V[n1];
+      int y = V[n2];
 
       for (int i = 0; i < n3; i++) {
-        y += 1;
-        if (y > 31) {
-          break;
-        }
-
-        int row = memory[I + i];
+        uint8_t byte = memory[I + i];
         for (int j = 0; j < 8; j++) {
-          x += 1;
-          if (x > 63) {
-            break;
-          }
-          int bit = row & 0xF;
+          int bit = (byte >> (7 - j)) & 1;
+          int draw_x = (x + j) % 64;
+          int draw_y = (y + i) % 32;
+          int idx = draw_x + draw_y * 64;
 
-          if (bit == display[x + y * 64]) {
-            if (bit == 1) {
-              display[x + y * 64] = 0;
+          if (bit) {
+            display[idx] = 1;
+            if (display[idx] == 1) {
               V[0xF] = 1;
             }
-          } else if (bit == 1) {
-            display[x + y * 64] = 1;
           }
         }
       }
+
       draw_display = true;
+      cout << "Wrote to display, time to draw" << endl;
       break;
     }
     case 0xE: {
@@ -298,6 +292,21 @@ void CHIP::print()
     }
     cout << endl;
   }
+}
+
+int CHIP::get_Pixel(int x, int y)
+{
+  return display[x + y * 64];
+}
+
+bool CHIP::get_Draw()
+{
+  return draw_display;
+}
+
+void CHIP::set_Draw(bool val)
+{
+  draw_display = val;
 }
 
 CHIP::~CHIP() {}
