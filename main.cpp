@@ -1,12 +1,13 @@
 #include "chip8.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_render.h>
 #include <unistd.h>
 
 const int SCREEN_HEIGHT = 320;
 const int SCREEN_WIDTH = 640;
 const int timerFreq = 60;
-const int chipFreq = 500;
+const int instPerFrame = 11;
 
 using namespace std;
 
@@ -102,6 +103,11 @@ int main(int argc, char* argv[])
       if (e.type == SDL_QUIT) {
         quit = true;
       } else if (e.type == SDL_KEYDOWN) {
+        if (e.key.keysym.sym == SDLK_l) {
+          chip.reset();
+        } else if (e.key.keysym.sym == SDLK_p) {
+          quit = true;
+        }
         cout << "Press" << endl;
         for (int i = 0; i < 16; i++) {
           if (e.key.keysym.sym == keymap[i]) {
@@ -149,7 +155,7 @@ int main(int argc, char* argv[])
       timer_time = 0;
     }
 
-    int num_cycles = delta_time * chipFreq / 1000;
+    int num_cycles = delta_time * instPerFrame * timerFreq / 1000;
     // cout << num_cycles << " " << delta_time << endl;
     for (int i = 0; i < num_cycles; i++) {
       chip.one_Cycle(false, false);

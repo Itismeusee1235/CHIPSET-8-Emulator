@@ -51,9 +51,25 @@ CHIP::CHIP()
 
   memset(display, 0, sizeof(display));
   memset(keyboard, 0, sizeof(keyboard));
-  draw_display = true;
 }
 
+void CHIP::reset()
+{
+  draw_display = true;
+  halt = false;
+  pressed = false;
+  srand(time(0));
+  st = 0;
+  dt = 0;
+  sp = -1;
+  I = 0;
+  memset(V, 0, sizeof(V));
+  memset(stack, 0, sizeof(stack));
+  pc = 0x200;
+
+  memset(display, 0, sizeof(display));
+  memset(keyboard, 0, sizeof(keyboard));
+}
 bool CHIP::loadRom(std::string file_name)
 {
   std::ifstream file;
