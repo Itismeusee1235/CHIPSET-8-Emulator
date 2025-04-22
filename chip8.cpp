@@ -319,16 +319,6 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
             }
           }
           pc -= 2;
-          // for (int i = 0; i < 16; i++) {
-          //   if (keyboard[i] != 0) {
-          //     pressed = true;
-          //     V[n1] = (uint8_t)i;
-          //     break;
-          //   }
-          // }
-          // if (!pressed) {
-          //   pc -= 2;
-          // }
           break;
         }
         case 0x15: {
@@ -407,6 +397,11 @@ void CHIP::update_Timers()
   if (st > 0) {
     st--;
   }
+}
+
+int CHIP::get_SoundTimer()
+{
+  return st > 0;
 }
 
 CHIP::~CHIP() {}

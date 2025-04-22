@@ -32,5 +32,6 @@ public:
   void set_Key(int, int);
   void set_Draw(bool);
   void update_Timers();
+  int get_SoundTimer();
   ~CHIP();
 };

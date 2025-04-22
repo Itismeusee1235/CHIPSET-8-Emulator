@@ -5,21 +5,48 @@
 
 const int SCREEN_HEIGHT = 320;
 const int SCREEN_WIDTH = 640;
+const int timerFreq = 60;
+const int chipFreq = 500;
 
 using namespace std;
 
 uint8_t keymap[16] = { SDLK_x, SDLK_1, SDLK_2, SDLK_3, SDLK_q, SDLK_w,
                        SDLK_e, SDLK_a, SDLK_s, SDLK_d, SDLK_z, SDLK_c,
                        SDLK_4, SDLK_r, SDLK_f, SDLK_v };
+float phase = 0.0f;
+float frequency = 440.0f; // A4 tone
+float amplitude = 0.25f;
+bool play_beep = false;
+
+void audio_callback(void* userdata, Uint8* stream, int len)
+{
+  float* fstream = (float*)stream;
+  int samples = len / sizeof(float);
+
+  for (int i = 0; i < samples; ++i) {
+    if (play_beep) {
+      fstream[i] = amplitude * sinf(phase);
+      phase += 2.0f * M_PI * frequency / 44100.0f;
+      if (phase >= 2.0f * M_PI)
+        phase -= 2.0f * M_PI;
+    } else {
+      fstream[i] = 0.0f;
+    }
+  }
+}
 
 int main()
 {
 
   CHIP chip;
-  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/6-keypad.ch8");
+  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/Particle Demo "
+               "[zeroZshadow, 2008].ch8");
 
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
+  SDL_AudioSpec wanted, have;
+  SDL_AudioDeviceID device = NULL;
+  SDL_memset(&wanted, 0, sizeof(wanted));
 
   if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
     printf("SDL Failed to INIT , %s", SDL_GetError());
@@ -43,6 +70,21 @@ int main()
     printf("Failed to make renderer, %s ", SDL_GetError());
     return -1;
   }
+
+  wanted.freq = 44100;
+  wanted.format = AUDIO_F32SYS;
+  wanted.channels = 1;
+  wanted.samples = 1024;
+  wanted.callback = audio_callback;
+
+  device =
+    SDL_OpenAudioDevice(NULL, 0, &wanted, &have, SDL_AUDIO_ALLOW_ANY_CHANGE);
+
+  if (device == NULL) {
+    printf("Failed to get audio device, %s ", SDL_GetError());
+  }
+
+  SDL_PauseAudioDevice(device, 0); // unpause device
 
   SDL_Rect pixel = { 31, 16, 10, 10 };
 
@@ -76,8 +118,6 @@ int main()
       }
     }
 
-    chip.print();
-
     int curr_time = SDL_GetTicks();
     int delta_time = curr_time - prev_time;
     // cout << delta_time << endl;
@@ -102,12 +142,23 @@ int main()
       SDL_RenderPresent(renderer);
     }
 
-    if (timer_time >= 1000 / 60) {
+    if (timer_time >= 1000 / timerFreq) {
       chip.update_Timers();
       timer_time = 0;
     }
-    if (cycle_time >= 1000 / 200) {
+    if (cycle_time >= 1000 / chipFreq) {
       chip.one_Cycle(false, false);
+      cycle_time = 0;
+    }
+
+    if (chip.get_SoundTimer()) {
+      play_beep = true;
+    } else {
+      play_beep = false;
+    }
+
+    if (delta_time < (1000 / 60)) {
+      SDL_Delay((1000 / 60) - delta_time);
     }
   }
 
