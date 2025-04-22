@@ -39,7 +39,10 @@ int main(int argc, char* argv[])
 {
 
   CHIP chip;
-  chip.loadRom(argv[1]);
+  if (!chip.loadRom(argv[1])) {
+    cout << "Failed to load rom" << endl;
+    return -1;
+  }
 
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
@@ -145,9 +148,11 @@ int main(int argc, char* argv[])
       chip.update_Timers();
       timer_time = 0;
     }
-    if (cycle_time >= 1000 / chipFreq) {
+
+    int num_cycles = delta_time * chipFreq / 1000;
+    // cout << num_cycles << " " << delta_time << endl;
+    for (int i = 0; i < num_cycles; i++) {
       chip.one_Cycle(false, false);
-      cycle_time = 0;
     }
 
     if (chip.get_SoundTimer()) {

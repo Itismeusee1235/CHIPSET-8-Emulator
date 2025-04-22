@@ -247,6 +247,8 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
     }
     case 0xD: {
 
+      V[0xF] = 0;
+
       n1 = get_nibble(opcode, 8, 0x0F00);
       n2 = get_nibble(opcode, 4, 0x00f0);
       n3 = get_nibble(opcode, 0, 0x000f);
@@ -260,7 +262,7 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
           int bit = (byte >> (7 - j)) & 1;
           int idx = (x + j) % 64 + ((y + i) % 32) * 64;
 
-          if (display[idx] == bit && bit == 1) {
+          if (display[idx] == 1 && bit == 1) {
             V[0xF] = 1;
           }
           display[idx] = display[idx] ^ bit;
