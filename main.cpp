@@ -35,12 +35,11 @@ void audio_callback(void* userdata, Uint8* stream, int len)
   }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 
   CHIP chip;
-  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/Particle Demo "
-               "[zeroZshadow, 2008].ch8");
+  chip.loadRom(argv[1]);
 
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
