@@ -17,7 +17,9 @@ class CHIP
 
   int get_nibble(int, int, int);
 
-  bool draw_display = false;
+  bool draw_display;
+  bool halt;
+  bool pressed;
 
 public:
   CHIP();
@@ -29,6 +31,6 @@ public:
   int get_Key(int);
   void set_Key(int, int);
   void set_Draw(bool);
-  void uodate_Timers();
+  void update_Timers();
   ~CHIP();
 };

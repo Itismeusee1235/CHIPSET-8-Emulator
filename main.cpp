@@ -16,8 +16,7 @@ int main()
 {
 
   CHIP chip;
-  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/Particle Demo "
-               "[zeroZshadow, 2008].ch8");
+  chip.loadRom("/home/fenrir/Programming/CHIP-8 Emulator/roms/6-keypad.ch8");
 
   SDL_Window* window = NULL;
   SDL_Renderer* renderer = NULL;
@@ -49,7 +48,8 @@ int main()
 
   bool quit = false;
 
-  int time = 0;
+  int timer_time = 0;
+  int cycle_time = 0;
   int prev_time = SDL_GetTicks();
 
   while (!quit) {
@@ -58,6 +58,7 @@ int main()
       if (e.type == SDL_QUIT) {
         quit = true;
       } else if (e.type == SDL_KEYDOWN) {
+        cout << "Press" << endl;
         for (int i = 0; i < 16; i++) {
           if (e.key.keysym.sym == keymap[i]) {
             chip.set_Key(i, 1);
@@ -65,6 +66,7 @@ int main()
           }
         }
       } else if (e.type == SDL_KEYUP) {
+        cout << "Unpress" << endl;
         for (int i = 0; i < 16; i++) {
           if (e.key.keysym.sym == keymap[i]) {
             chip.set_Key(i, 0);
@@ -74,16 +76,14 @@ int main()
       }
     }
 
+    chip.print();
+
     int curr_time = SDL_GetTicks();
     int delta_time = curr_time - prev_time;
-    cout << delta_time << endl;
+    // cout << delta_time << endl;
     prev_time = curr_time;
-    time += delta_time;
-
-    if (time >= 1000 / 60) {
-      chip.uodate_Timers();
-      time = 0;
-    }
+    timer_time += delta_time;
+    cycle_time += delta_time;
 
     if (chip.get_Draw()) {
       SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
@@ -102,8 +102,13 @@ int main()
       SDL_RenderPresent(renderer);
     }
 
-    chip.one_Cycle(false, true);
-    usleep(1500);
+    if (timer_time >= 1000 / 60) {
+      chip.update_Timers();
+      timer_time = 0;
+    }
+    if (cycle_time >= 1000 / 200) {
+      chip.one_Cycle(false, false);
+    }
   }
 
   return 0;

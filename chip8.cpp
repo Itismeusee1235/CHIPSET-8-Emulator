@@ -11,6 +11,9 @@ using namespace std;
 
 CHIP::CHIP()
 {
+  draw_display = true;
+  halt = false;
+  pressed = false;
   srand(time(0));
   st = 0;
   dt = 0;
@@ -77,6 +80,7 @@ bool CHIP::loadRom(std::string file_name)
 
 bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
 {
+
   uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];
   int type_nibble = get_nibble(opcode, 12, 0xF000);
 
@@ -174,38 +178,46 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
         case 3:
           V[n1] = V[n1] ^ V[n2];
           break;
-        case 4:
-          if (V[n1] + V[n2] > 0xFF) {
-            V[0xF] = 1;
-          } else {
-            V[0xF] = 0;
-          }
-          V[n1] = (uint8_t)(V[n1] + V[n2]);
+        case 4: {
+          uint16_t sum = V[n1] + V[n2];
+          V[n1] = (uint8_t)(sum);
+          V[0xF] = sum > 0xFF ? 1 : 0;
           break;
-        case 5:
-          if (V[n1] > V[n2]) {
-            V[0xF] = 1;
+        }
+        case 5: {
+          int car;
+          if (V[n1] >= V[n2]) {
+            car = 1;
           } else {
-            V[0xF] = 0;
+            car = 0;
           }
           V[n1] = V[n1] - V[n2];
+          V[0xF] = car;
           break;
-        case 6:
-          V[0xF] = V[n1] & 0x1;
+        }
+        case 6: {
+          int car = V[n1] & 0x1;
           V[n1] = (uint8_t)(V[n1] >> 1);
+          V[0xF] = car;
           break;
-        case 7:
-          if (V[n2] > V[n1]) {
-            V[0xF] = 1;
+        }
+        case 7: {
+          int car;
+          if (V[n2] >= V[n1]) {
+            car = 1;
           } else {
-            V[0xF] = 0;
+            car = 0;
           }
           V[n1] = V[n2] - V[n1];
+          V[0xF] = car;
           break;
-        case 0xE:
-          V[0xF] = (uint8_t)(V[n1] >> 7);
-          V[n1] = (uint8_t)(V[n1] >> 1);
+        }
+        case 0xE: {
+          int car = (uint8_t)(V[n1] >> 7);
+          V[n1] = (uint8_t)(V[n1] << 1);
+          V[0xF] = car;
           break;
+        }
       }
       break;
     }
@@ -246,16 +258,12 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
         uint8_t byte = memory[I + i];
         for (int j = 0; j < 8; j++) {
           int bit = (byte >> (7 - j)) & 1;
-          int draw_x = (x + j) % 64;
-          int draw_y = (y + i) % 32;
-          int idx = draw_x + draw_y * 64;
+          int idx = (x + j) % 64 + ((y + i) % 32) * 64;
 
-          if (bit) {
-            display[idx] = 1;
-            if (display[idx] == 1) {
-              V[0xF] = 1;
-            }
+          if (display[idx] == bit && bit == 1) {
+            V[0xF] = 1;
           }
+          display[idx] = display[idx] ^ bit;
         }
       }
 
@@ -268,13 +276,13 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
       n2 = get_nibble(opcode, 0, 0x00FF);
       switch (n2) {
         case 0x9E: {
-          if (V[n1] == 1) {
+          if (keyboard[V[n1]] == 1) {
             pc += 2;
           }
           break;
         }
         case 0xA1: {
-          if (V[n1] == 0) {
+          if (keyboard[V[n1]] == 0) {
             pc += 2;
           }
           break;
@@ -291,17 +299,36 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
           break;
         }
         case 0x0A: {
-          bool pressed = false;
-          for (int i = 0; i < 16; i++) {
-            if (keyboard[i] != 0) {
-              pressed = true;
-              V[n1] = (uint8_t)i;
-              break;
+          if (!halt) {
+            halt = true;
+          } else {
+            if (pressed) {
+              if (keyboard[V[n1]] == 0) {
+                halt = false;
+                pressed = false;
+                break;
+              }
+            } else {
+              for (int i = 0; i < 16; i++) {
+                if (keyboard[i] != 0) {
+                  pressed = true;
+                  V[n1] = (uint8_t)i;
+                  break;
+                }
+              }
             }
           }
-          if (!pressed) {
-            pc -= 2;
-          }
+          pc -= 2;
+          // for (int i = 0; i < 16; i++) {
+          //   if (keyboard[i] != 0) {
+          //     pressed = true;
+          //     V[n1] = (uint8_t)i;
+          //     break;
+          //   }
+          // }
+          // if (!pressed) {
+          //   pc -= 2;
+          // }
           break;
         }
         case 0x15: {
@@ -345,30 +372,7 @@ bool CHIP::one_Cycle(bool trace_mode, bool sound_on)
   return true;
 }
 
-void CHIP::print()
-{
-  // for (int i = 0x200; i < 0x287; i += 2) {
-  //   uint16_t instruction = (memory[i] << 8) | memory[i + 1];
-  //   // cout << hex << get_nibble(memory[i], 4, 0xF0)
-  //   //      << get_nibble(memory[i], 0, 0x0F);
-  //   // if (i % 2 == 1) {
-  //   //   cout << endl;
-  //   // }
-  //   // cout << hex << get_nibble(instruction, 12, 0xF000)
-  //   //      << get_nibble(instruction, 8, 0x0F00)
-  //   //      << get_nibble(instruction, 4, 0x00F0)
-  //   //      << get_nibble(instruction, 0, 0x000F) << endl;
-  //   if (get_nibble(instruction, 12, 0xF000) == 0xa) {
-  //     cout << "yay" << endl;
-  //   }
-  // }
-  for (int i = 0; i < 32; i++) {
-    for (int j = 0; j < 64; j++) {
-      cout << display[j + 64 * i];
-    }
-    cout << endl;
-  }
-}
+void CHIP::print() {}
 
 int CHIP::get_Pixel(int x, int y)
 {
@@ -395,7 +399,7 @@ void CHIP::set_Key(int key, int val)
   keyboard[key] = val;
 }
 
-void CHIP::uodate_Timers()
+void CHIP::update_Timers()
 {
   if (dt > 0) {
     dt--;
